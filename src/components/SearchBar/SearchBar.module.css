@@ -1,0 +1,29 @@
+.searchForm {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    position: relative;
+}
+
+.input {
+    width: 360px;
+    padding: 6px 12px 6px 48px;
+    border-radius: 6px;
+    font-size: 18px;
+    border: none;
+
+    &:placeholder-shown {
+        color: var(--grey);
+    }
+}
+
+.button {
+    background-color: transparent;
+    position: absolute;
+    top: 5px;
+    left: 5px;
+}
+
+.icon {
+    fill: var(--grey);
+}
