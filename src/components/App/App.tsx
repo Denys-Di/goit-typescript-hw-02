@@ -37,9 +37,7 @@ function App() {
   const [loader, setLoader] = useState<State>(false);
   const [messageError, setMessageError] = useState<State>(false);
   const [modalIsOpen, setIsOpen] = useState<State>(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<Partial<Image> | null>(
-    null
-  );
+  const [selectedPhoto, setSelectedPhoto] = useState<Image | null>(null);
   const [loadMore, setLoadMore] = useState<State>(false);
   const [page, setPage] = useState<number>(1);
   const [search, setSearch] = useState<string>("");
@@ -47,30 +45,23 @@ function App() {
   const handleSubmit = (query: string) => {
     setSearch(query);
     setPage(1);
-    return;
   };
 
-  const onLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-  };
+  const onLoadMore = () => setPage((prev) => prev + 1);
 
-  const fetchImagesData = async (query:string, page = 1) => {
+  const fetchImagesData = async (query: string, page = 1) => {
     try {
       setLoader(true);
       setMessageError(false);
-      const { results, total_pages } = await fetchImages<{
-        total_pages: number;
-        results: Image[];
-      }>("/search/photos", {
-        query: query,
-        page: page,
+      const { results, total_pages } = await fetchImages<ImageResult>("/search/photos", {
+        query,
+        page,
       });
 
-      page === 1 ? setImages(results) : setImages(images.concat(...results));
-
+      setImages((prev) => (page === 1 ? results : [...prev, ...results]));
       setLoadMore(total_pages > page);
-      results.length < 1 && toast.error("Not found any matches");
+
+      if (results.length < 1) toast.error("Not found any matches");
     } catch (err) {
       setMessageError(true);
       console.error(err);
@@ -80,28 +71,18 @@ function App() {
   };
 
   useEffect(() => {
-    if (!search) {
-      return;
-    }
+    if (!search) return;
     fetchImagesData(search, page);
-
-    if (page > 1) {
-      setTimeout(() => scrollBy({ behavior: "smooth", top: 580 }), 50);
-    }
+    if (page > 1) setTimeout(() => scrollBy({ behavior: "smooth", top: 580 }), 50);
   }, [search, page]);
 
-  function openModal() {
-    setIsOpen(true);
-  }
+  const openModal = () => setIsOpen(true);
+  const closeModal = () => setIsOpen(false);
 
-  function closeModal() {
-    setIsOpen(false);
-  }
-
-  const handleClick = (e: Event, item: Partial<Image>) => {
+  const handleClick: (e: Event, item: Partial<Image>) => void = (e, item) => {
     e.preventDefault();
+    setSelectedPhoto(item as Image);
     openModal();
-    setSelectedPhoto(item);
   };
 
   return (
@@ -111,13 +92,13 @@ function App() {
       </Header>
       <main>
         <Loader visible={loader} />
-        <ImageGallery images={images} onClick={handleClick} />
+        <ImageGallery images={images} onClick={(e, item) => handleClick(e as unknown as Event, item)} />
         <Toaster position="top-right" />
         <ImageModal
           closeModal={closeModal}
           modalIsOpen={modalIsOpen}
-          alt={selectedPhoto?.alt_description}
-          image={selectedPhoto?.urls?.regular}
+          alt={selectedPhoto?.alt_description ?? "No description available"}
+          image={selectedPhoto?.urls?.regular ?? ""}
         />
         <ErrorMessage messageError={messageError} />
         {loadMore && <LoadMoreBtn onClick={onLoadMore} />}
